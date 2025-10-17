@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Conversation Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+        
+        #listenBtn {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        #listenBtn:hover {
+            background: #45a049;
+        }
+        
+        #listenBtn.listening {
+            background: #f44336;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        #clearBtn {
+            background: #ff9800;
+            color: white;
+        }
+        
+        #clearBtn:hover {
+            background: #e68900;
+        }
+        
+        .section {
+            margin-bottom: 20px;
+        }
+        
+        .section h2 {
+            color: #555;
+            font-size: 18px;
+            margin-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 5px;
+        }
+        
+        #conversation {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 150px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .transcript-line {
+            margin-bottom: 8px;
+            padding: 5px;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+        
+        #suggestions {
+            background: #e8f5e9;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 60px;
+            font-size: 16px;
+            line-height: 1.8;
+            font-weight: 500;
+        }
+        
+        #reasoning {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 8px;
+            padding: 15px;
+            min-height: 80px;
+            font-size: 14px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .source-tag {
+            display: inline-block;
+            background: #ff9800;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-right: 5px;
+            margin-bottom: 5px;
+        }
+        
+        .suggestion-item {
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .status.listening {
+            background: #ffebee;
+            color: #c62828;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .status.processing {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        
+        .status.ready {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .api-key-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 8px;
+            border: 1px solid #ffc107;
+        }
+        
+        .api-key-section input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 AI Conversation Assistant</h1>
+        
+        <div class="api-key-section">
+            <label for="apiKey"><strong>Gemini API Key:</strong></label>
+            <input type="password" id="apiKey" placeholder="Enter your Gemini API key here">
+            <small style="display: block; margin-top: 5px; color: #666;">Get your free API key from <a href="https://makersuite.google.com/app/apikey" target="_blank">Google AI Studio</a></small>
+        </div>
+        
+        <div class="status ready" id="status">Ready to listen</div>
+        
+        <div id="micLevel" style="display: none; margin-bottom: 15px;">
+            <div style="text-align: center; margin-bottom: 5px; font-weight: 600;">🎤 Microphone Level</div>
+            <div style="background: #ddd; height: 30px; border-radius: 15px; overflow: hidden; position: relative;">
+                <div id="micBar" style="background: linear-gradient(90deg, #4CAF50, #FFC107, #f44336); height: 100%; width: 0%; transition: width 0.1s;"></div>
+            </div>
+            <div id="micText" style="text-align: center; margin-top: 5px; font-size: 12px; color: #666;">Volume: 0%</div>
+        </div>
+        
+        <div class="controls">
+            <button id="listenBtn">🎤 Start Listening</button>
+            <button id="clearBtn">🗑️ Clear</button>
+        </div>
+        
+        <div class="section">
+            <h2>📝 Conversation</h2>
+            <div id="conversation"></div>
+        </div>
+        
+        <div class="section">
+            <h2>💡 AI Suggestion (What to say next)</h2>
+            <div id="suggestions">
+                <em>Suggestions will appear here after you start speaking...</em>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>📚 Suggestion Source & Reasoning</h2>
+            <div id="reasoning">
+                <em>Explanation will appear here...</em>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
